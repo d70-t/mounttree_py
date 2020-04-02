@@ -128,8 +128,8 @@ class CartesianCoordinateFrame(CoordinateFrame):
         return  Rotation.Identity()
 
 class OblateEllipsoidFrame(CoordinateFrame):
-    def __init__(self, a,b,variables):
-        super().__init__(variables)
+    def __init__(self, a,b,*args):
+        super().__init__(*args)
         self.axes=(a,b)
     @property
     def axes(self):
