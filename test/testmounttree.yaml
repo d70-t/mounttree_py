@@ -1,0 +1,37 @@
+type: mount tree
+description:
+    name: Flight AC 17
+    valid:
+        from: 2014-09-27T00:00:00+00:00
+        until: 2014-09-27T23:59:59+00:00
+mounttree:
+    framename: EARTH
+    framespec: WGS-84
+    subframes:
+        - framename: HALO
+          position: [lat, lon, height]
+          rotation: [roll, pitch, yaw]
+          axesConvention: NED
+          sensors:
+              - name: BAHAMAS
+                sensorId: BAHAMAS
+                provides: [lat, lon, height, roll, pitch, yaw]
+          subframes:
+              - framename: VNIR
+                position: [0, 0, 0]
+                rotation: Ry(-85deg)*Rz(-90deg)
+                sensors:
+                    - name: VNIR
+                      sensorId: "550008"
+                      tofs:
+                          method: twopoint
+                          params: {dt1: 0.42, dt2: 1.43, t1: 1409657184.0, t2: 1409681114.8}
+              - framename: SWIR
+                position: [0, 0, 0]
+                rotation: Ry(-85deg)*Rz(-90deg)
+                sensors:
+                    - name: SWIR
+                      sensorId: "410043"
+                      tofs:
+                          method: twopoint
+                          params: {dt1: 0.42, dt2: 1.43, t1: 1409657184.0, t2: 1409681114.8}
