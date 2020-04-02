@@ -6,20 +6,19 @@ import re as reg
 
 # data=yaml.load(open('/project/meteo/work/Paul.Ockenfuss/Software/runmacs/test/test_geometry/testmounttree.yaml'))
 # tree=data['mounttree']
-coordinate_lib={'WGS-84':lambda variables: mnt.OblateEllipsoidFrame(6378137.0, 6356752.314245,variables), 'GRS-80':lambda variables: mnt.OblateEllipsoidFrame(6378137.0,  6356752.314140,variables)}
 variables={'lat':1, 'lon':1, 'height':2, 'yaw':0, 'pitch':0, 'roll':90}
 def load_mounttree(filename):
-    tree=yaml.load(open(filename))
+    with open(filename) as f:
+        tree=yaml.load(f)
     name=tree['description']['name']
     tree=tree['mounttree']
     root_frame=create_from_yaml(tree, variables)
     universe=mnt.CoordinateUniverse(name, root_frame, variables)
-    mytransform=universe.get_transformation('VNIR', 'SWIR')
-    print(mytransform)
+    return universe
 
 def create_from_yaml(mounttree, variables):
     try:
-        rhs=coordinate_lib[mounttree['framespec']](variables)
+        rhs=mnt.coordinate_lib[mounttree['framespec']](variables)
     except KeyError:
         rhs=mnt.CartesianCoordinateFrame(variables)
     rhs.name=mounttree['framename']

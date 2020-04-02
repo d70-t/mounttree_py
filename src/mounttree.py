@@ -9,11 +9,9 @@ class FrameNotFoundError(Exception):
 coordinate_lib={'WGS-84':lambda variables={}: OblateEllipsoidFrame(6378137.0, 6356752.314245,variables), 'GRS-80':lambda variables={}: OblateEllipsoidFrame(6378137.0,  6356752.314140,variables)}
 
 class CoordinateUniverse(object):
-
     def __init__(self, name, root_frame, variables={}):
         self.name=name
         self.root_frame=root_frame
-        # self.frames.append(CoordinateFrame(tree, variables))
     def find_path_to_frame(self, framename):
         return self.root_frame.find_path_to_frame(framename)
     def get_frame(self, framename):
@@ -30,8 +28,9 @@ class CoordinateUniverse(object):
         from_transform=prefix.collect_transform(p1)
         to_transform=prefix.collect_transform(p2)
         return to_transform.invert()*from_transform
-        
-
+    
+    def update(self, **kwargs):
+        self.root_frame.update(**kwargs)
 class CoordinateFrame(object):
     def __init__(self, variables={}):
         self.variables=variables
@@ -115,9 +114,9 @@ class CoordinateFrame(object):
         child_to_self=self.get_transform_child(path[0])
         final_to_child=path[0].collect_transform(path[1:])
         return child_to_self*final_to_child
-        
-            
 
+    def update(self, **kwargs):
+        self.variables.update(kwargs)
 
 class CartesianCoordinateFrame(CoordinateFrame):
     def toNatural(self,cartesian):
