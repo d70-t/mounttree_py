@@ -2,13 +2,15 @@ from debug import debug
 import numpy as np
 def deg2rad(deg):
     return deg/180.0*np.pi
+def rad2deg(rad):
+    return rad/np.pi*180.0
 class FrameNotFoundError(Exception):
     pass
-
+coordinate_lib={'WGS-84':lambda variables={}: OblateEllipsoidFrame(6378137.0, 6356752.314245,variables), 'GRS-80':lambda variables={}: OblateEllipsoidFrame(6378137.0,  6356752.314140,variables)}
 
 class CoordinateUniverse(object):
 
-    def __init__(self, name, root_frame, variables):
+    def __init__(self, name, root_frame, variables={}):
         self.name=name
         self.root_frame=root_frame
         # self.frames.append(CoordinateFrame(tree, variables))
@@ -25,21 +27,17 @@ class CoordinateUniverse(object):
             prefix=p1[0]
             p1=p1[1:]
             p2=p2[1:]
-        print(*[p.name for p in p1])
-        print(*[p.name for p in p2])
         from_transform=prefix.collect_transform(p1)
         to_transform=prefix.collect_transform(p2)
-        print(from_transform)
-        print(to_transform)
         return to_transform.invert()*from_transform
         
 
 class CoordinateFrame(object):
-    def __init__(self, variables):
+    def __init__(self, variables={}):
         self.variables=variables
         self.children=[]
-        self.pos=[np.nan, np.nan, np.nan]
-        self.euler=[np.nan, np.nan, np.nan]
+        self.pos=[0,0,0]
+        self.euler=[0,0,0]
         self.__rotation=None
 
     def add_child(self, CoordinateFrame):
@@ -106,7 +104,6 @@ class CoordinateFrame(object):
 
     def get_transform_child(self,child):
         nat_position=child.pos
-        print(nat_position)
         position=self.toCartesian(nat_position)
         rotation=child.rotation
         transform=Translation.fromPoint(position)*self.getLocalFrameRotation(nat_position)*rotation
@@ -192,13 +189,17 @@ class Transform(object):
         self.M=M
     def apply_point(self, p):
         return (self.M @ np.append(p,1))[:3]
-    def apply_dir(self, v):
-        return (self.M @ np.append(p,0))[:3]
+    def apply_direction(self, v):
+        return (self.M @ np.append(v,0))[:3]
     def __mul__(self, o):
-        newTransform=self.__class__(self.M@o.M)
-        return newTransform
+        assert(isinstance(o,Transform))
+        if self.__class__==o.__class__:
+            return self.__class__(self.M@o.M)
+        return Transform(self.M@o.M)
     def __str__(self):
         return repr(self.M)
+    def __eq__(self, o):
+        return self.M==self.o
     def invert(self):
         return self.__class__(np.linalg.inv(self.M))
         
