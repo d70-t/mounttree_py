@@ -1,0 +1,241 @@
+# -*- coding: utf-8 -*-
+
+from unittest import TestCase
+import unittest
+import numpy.testing as npt
+import numpy as np
+import sys as sys
+sys.path.append('/home/p/Paul.Ockenfuss/Work/Software/mounttree_py/src/')
+import mounttree as mnt
+class BasicTests(TestCase):
+    def test_forward_rotation(self):
+        halo=mnt.CartesianCoordinateFrame()
+        halo.name='HALO'
+        vnir=mnt.CartesianCoordinateFrame()
+        vnir.name='VNIR'
+        vnir.rotation=mnt.Rotation.fromAngle(np.pi/2, 'z')
+        halo.add_child(vnir)
+        universe=mnt.CoordinateUniverse('universe', halo)
+        child_transform=halo.get_transform_child(vnir)
+        transform=universe.get_transformation('VNIR','HALO')
+        npt.assert_almost_equal(child_transform.apply_direction([1, 0, 0]), [0, 1, 0])
+        npt.assert_almost_equal(transform.apply_direction([1, 0, 0]), [0, 1, 0])
+
+    def test_find_path_to_frame(self):
+        halo=mnt.CartesianCoordinateFrame()
+        halo.name='HALO'
+        vnir=mnt.CartesianCoordinateFrame()
+        vnir.name='VNIR'
+        halo.add_child(vnir)
+        universe=mnt.CoordinateUniverse('universe', halo)
+        path=universe.find_path_to_frame('VNIR')
+        self.assertIs(vnir, path[0])
+        self.assertEqual(len(path),1)
+    def test_find_path_to_frame_deep(self):
+        halo=mnt.CartesianCoordinateFrame()
+        halo.name='HALO'
+        vnir=mnt.CartesianCoordinateFrame()
+        vnir.name='VNIR'
+        swir=mnt.CartesianCoordinateFrame()
+        swir.name='SWIR'
+        containment=mnt.CartesianCoordinateFrame()
+        containment.name='CONTAINMENT'
+        containment.add_child(vnir)
+        containment.add_child(swir)
+        halo.add_child(containment)
+        universe=mnt.CoordinateUniverse('universe', halo)
+        path=universe.find_path_to_frame('SWIR')
+        path2=universe.find_path_to_frame('VNIR')
+        self.assertIs(swir, path[1])
+        self.assertIs(vnir, path2[1])
+        self.assertIs(containment, path[0])
+        self.assertEqual(len(path),2)
+
+    def test_backward_rotation(self):
+        halo=mnt.CartesianCoordinateFrame()
+        halo.name='HALO'
+        vnir=mnt.CartesianCoordinateFrame()
+        vnir.name='VNIR'
+        vnir.rotation=mnt.Rotation.fromAngle(np.pi/2, 'z')
+        halo.add_child(vnir)
+        universe=mnt.CoordinateUniverse('universe', halo)
+        transform=universe.get_transformation('HALO','VNIR')
+        npt.assert_almost_equal(transform.apply_direction([0, 1, 0]), [1, 0, 0])
+
+    def test_zig_zag_transform(self):
+        halo=mnt.CartesianCoordinateFrame()
+        halo.name='HALO'
+        vnir=mnt.CartesianCoordinateFrame()
+        vnir.name='VNIR'
+        vnir.rotation=mnt.Rotation.fromAngle(np.pi/2, 'z')
+        swir=mnt.CartesianCoordinateFrame()
+        swir.name='SWIR'
+        swir.rotation=mnt.Rotation.fromAngle(-np.pi/2, 'z')
+        halo.add_child(vnir)
+        halo.add_child(swir)
+        universe=mnt.CoordinateUniverse('universe', halo)
+        transform=universe.get_transformation('SWIR','VNIR')
+        npt.assert_almost_equal(transform.apply_direction([0, 1, 0]), [0, -1, 0])
+    def test_double_transform(self):
+        halo=mnt.CartesianCoordinateFrame()
+        halo.name='HALO'
+        intermediate=mnt.CartesianCoordinateFrame()
+        intermediate.name='INTER'
+        intermediate.rotation=mnt.Rotation.fromAngle(np.pi/2, 'z')
+        swir=mnt.CartesianCoordinateFrame()
+        swir.name='SWIR'
+        swir.rotation=mnt.Rotation.fromAngle(np.pi/2, 'z')
+        intermediate.add_child(swir)
+        halo.add_child(intermediate)
+        universe=mnt.CoordinateUniverse('uni', halo)
+        transform=universe.get_transformation('HALO','SWIR')
+        npt.assert_almost_equal(transform.apply_direction([0, 1, 0]), [0, -1, 0])
+    def test_forward_shift(self):
+        a=mnt.CartesianCoordinateFrame()
+        b=mnt.CartesianCoordinateFrame()
+        a.name='a'
+        b.name='b'
+        b.pos=[1,2,0]
+        a.add_child(b)
+        universe=mnt.CoordinateUniverse('uni', a)
+        transform=universe.get_transformation('b','a')
+        npt.assert_almost_equal(transform.apply_point([1, 0, 0]), [2, 2, 0])
+
+    def test_backward_shift(self):
+        a=mnt.CartesianCoordinateFrame()
+        b=mnt.CartesianCoordinateFrame()
+        a.name='a'
+        b.name='b'
+        b.pos=[1,2,0]
+        a.add_child(b)
+        universe=mnt.CoordinateUniverse('uni', a)
+        transform=universe.get_transformation('a','b')
+        npt.assert_almost_equal(transform.apply_point([2, 0, 0]), [1, -2, 0])
+class TransformTest(TestCase):
+    def test_rotation_inverse(self):
+        rot=mnt.Rotation.fromAngle(mnt.deg2rad(77),'x')
+        rot=mnt.Rotation.fromAngle(mnt.deg2rad(48),'z')*rot
+        assert(isinstance(rot,mnt.Rotation))
+        roti=rot.invert()
+        ident=rot*roti
+        npt.assert_almost_equal(ident.M,np.eye(4))
+        
+    def test_translation_inverse(self):
+        trans=mnt.Translation.fromPoint([2,5,77.8])
+        assert(isinstance(trans, mnt.Translation))
+        transi=trans.invert()
+        ident=trans*transi
+        npt.assert_almost_equal(ident.M, np.eye(4))
+
+    def test_transform_inverse(self):
+        trans=mnt.Translation.fromPoint([2,5,77.8])
+        rot=mnt.Rotation.fromAngle(mnt.deg2rad(77),'x')
+        rot=mnt.Rotation.fromAngle(mnt.deg2rad(48),'z')*rot
+        transform=rot*trans*rot
+        assert(type(transform)==mnt.Transform)
+        transformi=transform.invert()
+        ident=transform*transformi
+        npt.assert_almost_equal(ident.M, np.eye(4))
+
+class EarthTest(TestCase):
+    def test_simple_positions(self):
+        earth=mnt.coordinate_lib['WGS-84']()
+        npt.assert_almost_equal(earth.toCartesian([90,0,0]), [0,0,6356752.314245])
+        npt.assert_almost_equal(earth.toCartesian([ 0,0,0]), [6378137.0,0,0])
+        npt.assert_almost_equal(earth.toCartesian([ 0,270,0]), [0,-6378137.0,0])
+    def test_direction(self):
+        ned2enu=mnt.Rotation.fromAngle(np.pi/2, 'z')*mnt.Rotation.fromAngle(np.pi, 'x')
+        earth=mnt.coordinate_lib['WGS-84']()
+        earth.name='earth'
+        local=mnt.CartesianCoordinateFrame()
+        local.name='local'
+        local.pos=[45,45,0]
+        local.rotation=ned2enu
+        earth.add_child(local)
+        check_result=[-0.5,-0.5,np.sqrt(0.5)]
+        universe=mnt.CoordinateUniverse('uni', earth)
+        transform=universe.get_transformation('local', 'earth')
+        npt.assert_almost_equal(transform.apply_direction([0,1,0]),check_result)
+
+    def test_natural_coordinates(self):
+        earth=mnt.coordinate_lib['WGS-84']()
+        positions=[ [90, 0, 0], [0, 90, 0], [23.45, 17.41, 15.7], [-65.1, 0.5, 20000.8],[5.3, -165.2, 0]]
+        for p in positions:
+            res=earth.toNatural(earth.toCartesian(p))
+            npt.assert_almost_equal(res, p)
+    def test_natural_downwards(self):
+        earth=mnt.coordinate_lib['WGS-84']()
+        ref=np.array([0,0,9000])
+        cart=earth.toCartesian(ref)
+        res=earth.toNatural(cart-np.array([1100,0,0]))
+        npt.assert_almost_equal(res, np.array([0,0,7900]))
+        
+    def test_natural_downwards2(self):
+        earth=mnt.coordinate_lib['WGS-84']()
+        ref=np.array([0,90,9000])
+        cart=earth.toCartesian(ref)
+        res=earth.toNatural(cart-np.array([0,1100,0]))
+        npt.assert_almost_equal(res, np.array([0,90,7900]))
+
+    def test_get_origin_of_subframes(self):
+        earth=mnt.coordinate_lib['WGS-84']()
+        earth.name='earth'
+        local=mnt.CartesianCoordinateFrame()
+        local.name='local'
+        local.pos=[45,45,0]
+        earth.add_child(local)
+        universe=mnt.CoordinateUniverse('uni', earth)
+        transform=universe.get_transformation('local', 'earth')
+        res=transform.apply_point([0,0,0])
+        npt.assert_almost_equal(res, universe.get_frame('earth').toCartesian([45,45,0]))
+
+class StabilizationTest(TestCase):
+    def setUp(self):
+        earth=mnt.coordinate_lib['WGS-84']()
+        earth.name='earth'
+        stabilized=mnt.CartesianCoordinateFrame()
+        stabilized.name='stabilized'
+        self.lat = 10.
+        self.lon = 15.
+        self.height = 7000.
+        self.roll = np.pi/6.
+        self.pitch = 0#np.pi/9.
+        self.yaw = -np.pi
+        stabilized.pos=[self.lat, self.lon, self.height]
+        stabilized.euler=[0,0,mnt.rad2deg(self.yaw)]
+        halo=mnt.CartesianCoordinateFrame()
+        halo.name='HALO'
+        halo.euler=[mnt.rad2deg(self.roll),mnt.rad2deg(self.pitch),0]
+        stabilized.add_child(halo)
+        earth.add_child(stabilized)
+        self.universe=mnt.CoordinateUniverse('uni', earth)
+    def test_roll_correction(self):
+        transform=self.universe.get_transformation('HALO', 'stabilized')
+        res=transform.apply_direction([0,1,0])
+        npt.assert_almost_equal(res, [0,np.cos(self.roll), np.sin(self.roll)])
+    def test_plane2plane(self):
+        plane2=mnt.CartesianCoordinateFrame()
+        plane2.name='plane2'
+        plane2.pos=[10.1, 15.2, 7500.]
+        plane2.euler=[0, 0.1, 0.2]
+        self.universe.get_frame('earth').add_child(plane2)
+        tr1=self.universe.get_transformation("HALO", 'plane2')
+        tr2=self.universe.get_transformation("plane2","HALO")
+        res1=tr1.apply_point([0,0,0])
+        res2=tr2.apply_point([0,0,0])
+        res3=tr2.apply_point([100,0,0])
+        res4=tr2.apply_point(tr1.apply_point([24, 745., 812]))
+        res2=np.array(res2)
+        res3=np.array(res3)
+        res4=np.array(res4)
+
+        npt.assert_almost_equal(np.linalg.norm(res1),np.linalg.norm(res2))
+        npt.assert_almost_equal(np.linalg.norm(res3-res2),100)
+        npt.assert_almost_equal(np.linalg.norm(res4-np.array([24, 745., 812])),0)
+        
+
+
+
+if __name__=='__main__':
+    unittest.main()
+
