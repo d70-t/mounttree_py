@@ -6,21 +6,20 @@ import re as reg
 
 # data=yaml.load(open('/project/meteo/work/Paul.Ockenfuss/Software/runmacs/test/test_geometry/testmounttree.yaml'))
 # tree=data['mounttree']
-variables={'lat':1, 'lon':1, 'height':2, 'yaw':0, 'pitch':0, 'roll':90}
 def load_mounttree(filename):
     with open(filename) as f:
         tree=yaml.load(f)
     name=tree['description']['name']
     tree=tree['mounttree']
-    root_frame=create_from_yaml(tree, variables)
-    universe=mnt.CoordinateUniverse(name, root_frame, variables)
+    root_frame=create_from_yaml(tree)
+    universe=mnt.CoordinateUniverse(name, root_frame)
     return universe
 
-def create_from_yaml(mounttree, variables):
+def create_from_yaml(mounttree):
     try:
-        rhs=mnt.coordinate_lib[mounttree['framespec']](variables)
+        rhs=mnt.coordinate_lib[mounttree['framespec']]()
     except KeyError:
-        rhs=mnt.CartesianCoordinateFrame(variables)
+        rhs=mnt.CartesianCoordinateFrame()
     rhs.name=mounttree['framename']
     if 'position' in mounttree:
         rhs.pos=mounttree['position']
@@ -33,7 +32,7 @@ def create_from_yaml(mounttree, variables):
             rhs.rotation=convert_rot_string(rot_input)
     if 'subframes' in mounttree:
         for subframe in mounttree['subframes']:
-            rhs.add_child(create_from_yaml(subframe, variables))
+            rhs.add_child(create_from_yaml(subframe))
     return rhs
 
 def convert_rot_string(rot_string):

@@ -12,12 +12,16 @@ class CoordinateUniverse(object):
     def __init__(self, name, root_frame, variables={}):
         self.name=name
         self.root_frame=root_frame
+        self.variables=variables
     def find_path_to_frame(self, framename):
         return self.root_frame.find_path_to_frame(framename)
     def get_frame(self, framename):
         return self.root_frame.get_frame(framename)
         
-    def get_transformation(self,start, to):
+    def get_transformation(self,start, to, **kwargs):
+        transform_variables=self.variables.copy()
+        transform_variables.update(kwargs)
+        self.root_frame.set_variables(**transform_variables)
         p1=self.find_path_to_frame(start)
         p2=self.find_path_to_frame(to)
         prefix=self.root_frame
@@ -30,7 +34,11 @@ class CoordinateUniverse(object):
         return to_transform.invert()*from_transform
     
     def update(self, **kwargs):
+        self.variables.update(kwargs)
         self.root_frame.update(**kwargs)
+    def set_variables(self, **kwargs):
+        self.variables=kwargs
+        self.root_frame.set_variables(**kwargs)
 class CoordinateFrame(object):
     def __init__(self, variables={}):
         self.variables=variables
@@ -117,6 +125,12 @@ class CoordinateFrame(object):
 
     def update(self, **kwargs):
         self.variables.update(kwargs)
+        for child in self.children:
+            child.update(**kwargs)
+    def set_variables(self, **kwargs):
+        self.variables=kwargs
+        for child in self.children:
+            child.set_variables(**kwargs)
 
 class CartesianCoordinateFrame(CoordinateFrame):
     def toNatural(self,cartesian):
