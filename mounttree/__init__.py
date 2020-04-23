@@ -1,7 +1,7 @@
-from debug import debug
+from .debug import debug 
 import yaml
 import numpy as np
-import mounttree as mnt
+import mounttree.mounttree as mnt
 import re as reg
 
 # data=yaml.load(open('/project/meteo/work/Paul.Ockenfuss/Software/runmacs/test/test_geometry/testmounttree.yaml'))

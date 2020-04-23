@@ -5,8 +5,8 @@ import unittest
 import numpy.testing as npt
 import numpy as np
 import sys as sys
-sys.path.append('/home/p/Paul.Ockenfuss/Work/Software/mounttree_py/src/')
-import mounttree as mnt
+# sys.path.append('/home/p/Paul.Ockenfuss/Work/Software/mounttree_py/src/')
+import mounttree.mounttree as mnt
 class BasicTests(TestCase):
     def test_forward_rotation(self):
         halo=mnt.CartesianCoordinateFrame()
@@ -18,8 +18,8 @@ class BasicTests(TestCase):
         universe=mnt.CoordinateUniverse('universe', halo)
         child_transform=halo.get_transform_child(vnir)
         transform=universe.get_transformation('VNIR','HALO')
-        npt.assert_almost_equal(child_transform.apply_direction([1, 0, 0]), [0, 1, 0])
-        npt.assert_almost_equal(transform.apply_direction([1, 0, 0]), [0, 1, 0])
+        npt.assert_almost_equal(child_transform.apply_direction(1, 0, 0), [0, 1, 0])
+        npt.assert_almost_equal(transform.apply_direction(1, 0, 0), [0, 1, 0])
 
     def test_find_path_to_frame(self):
         halo=mnt.CartesianCoordinateFrame()
@@ -60,7 +60,7 @@ class BasicTests(TestCase):
         halo.add_child(vnir)
         universe=mnt.CoordinateUniverse('universe', halo)
         transform=universe.get_transformation('HALO','VNIR')
-        npt.assert_almost_equal(transform.apply_direction([0, 1, 0]), [1, 0, 0])
+        npt.assert_almost_equal(transform.apply_direction(0, 1, 0), [1, 0, 0])
 
     def test_zig_zag_transform(self):
         halo=mnt.CartesianCoordinateFrame()
@@ -75,7 +75,7 @@ class BasicTests(TestCase):
         halo.add_child(swir)
         universe=mnt.CoordinateUniverse('universe', halo)
         transform=universe.get_transformation('SWIR','VNIR')
-        npt.assert_almost_equal(transform.apply_direction([0, 1, 0]), [0, -1, 0])
+        npt.assert_almost_equal(transform.apply_direction(0, 1, 0), [0, -1, 0])
     def test_double_transform(self):
         halo=mnt.CartesianCoordinateFrame()
         halo.name='HALO'
@@ -89,7 +89,7 @@ class BasicTests(TestCase):
         halo.add_child(intermediate)
         universe=mnt.CoordinateUniverse('uni', halo)
         transform=universe.get_transformation('HALO','SWIR')
-        npt.assert_almost_equal(transform.apply_direction([0, 1, 0]), [0, -1, 0])
+        npt.assert_almost_equal(transform.apply_direction(0, 1, 0), [0, -1, 0])
     def test_forward_shift(self):
         a=mnt.CartesianCoordinateFrame()
         b=mnt.CartesianCoordinateFrame()
@@ -99,7 +99,7 @@ class BasicTests(TestCase):
         a.add_child(b)
         universe=mnt.CoordinateUniverse('uni', a)
         transform=universe.get_transformation('b','a')
-        npt.assert_almost_equal(transform.apply_point([1, 0, 0]), [2, 2, 0])
+        npt.assert_almost_equal(transform.apply_point(1, 0, 0), [2, 2, 0])
 
     def test_backward_shift(self):
         a=mnt.CartesianCoordinateFrame()
@@ -110,7 +110,7 @@ class BasicTests(TestCase):
         a.add_child(b)
         universe=mnt.CoordinateUniverse('uni', a)
         transform=universe.get_transformation('a','b')
-        npt.assert_almost_equal(transform.apply_point([2, 0, 0]), [1, -2, 0])
+        npt.assert_almost_equal(transform.apply_point(2, 0, 0), [1, -2, 0])
 class TransformTest(TestCase):
     def test_rotation_inverse(self):
         rot=mnt.Rotation.fromAngle(mnt.deg2rad(77),'x')
@@ -155,7 +155,7 @@ class EarthTest(TestCase):
         check_result=[-0.5,-0.5,np.sqrt(0.5)]
         universe=mnt.CoordinateUniverse('uni', earth)
         transform=universe.get_transformation('local', 'earth')
-        npt.assert_almost_equal(transform.apply_direction([0,1,0]),check_result)
+        npt.assert_almost_equal(transform.apply_direction(0,1,0),check_result)
 
     def test_natural_coordinates(self):
         earth=mnt.coordinate_lib['WGS-84']()
@@ -186,7 +186,7 @@ class EarthTest(TestCase):
         earth.add_child(local)
         universe=mnt.CoordinateUniverse('uni', earth)
         transform=universe.get_transformation('local', 'earth')
-        res=transform.apply_point([0,0,0])
+        res=transform.apply_point(0,0,0)
         npt.assert_almost_equal(res, universe.get_frame('earth').toCartesian([45,45,0]))
 
 class StabilizationTest(TestCase):
@@ -211,7 +211,7 @@ class StabilizationTest(TestCase):
         self.universe=mnt.CoordinateUniverse('uni', earth)
     def test_roll_correction(self):
         transform=self.universe.get_transformation('HALO', 'stabilized')
-        res=transform.apply_direction([0,1,0])
+        res=transform.apply_direction(0,1,0)
         npt.assert_almost_equal(res, [0,np.cos(self.roll), np.sin(self.roll)])
     def test_plane2plane(self):
         plane2=mnt.CartesianCoordinateFrame()
@@ -221,10 +221,10 @@ class StabilizationTest(TestCase):
         self.universe.get_frame('earth').add_child(plane2)
         tr1=self.universe.get_transformation("HALO", 'plane2')
         tr2=self.universe.get_transformation("plane2","HALO")
-        res1=tr1.apply_point([0,0,0])
-        res2=tr2.apply_point([0,0,0])
-        res3=tr2.apply_point([100,0,0])
-        res4=tr2.apply_point(tr1.apply_point([24, 745., 812]))
+        res1=tr1.apply_point(0,0,0)
+        res2=tr2.apply_point(0,0,0)
+        res3=tr2.apply_point(100,0,0)
+        res4=tr2.apply_point(*tr1.apply_point(24, 745., 812))
         res2=np.array(res2)
         res3=np.array(res3)
         res4=np.array(res4)
@@ -243,48 +243,62 @@ class Ball(TestCase):
         self.universe=mnt.CoordinateUniverse('uni', ball)
         self.tr1=self.universe.get_transformation('local','ball')
     def test_position_transformation(self):
-        res1 = self.tr1.apply_point([0., 0., 0.])
+        res1 = self.tr1.apply_point(0., 0., 0.)
         npt.assert_almost_equal(res1, [1., 0., 0.])
-        res2 = self.tr1.apply_point([0., 1., 0.])
+        res2 = self.tr1.apply_point(0., 1., 0.)
         npt.assert_almost_equal(res2, [1., 1., 0.])
-        res3 = self.tr1.apply_point([0., 1., 0.])
+        res3 = self.tr1.apply_point(0., 1., 0.)
         npt.assert_almost_equal(res3, [1., 1., 0.])
-        res4 = self.tr1.apply_point([0., 0., 1.])
+        res4 = self.tr1.apply_point(0., 0., 1.)
         npt.assert_almost_equal(np.linalg.norm(res4), 1e-9)
-        res5 = self.tr1.apply_point([1., 0., 1.])
+        res5 = self.tr1.apply_point(1., 0., 1.)
         npt.assert_almost_equal(res5, [0., 0., 1.])
+    def test_position_transformation_pointArray(self):
+        x=np.array([[0,0,0],[0,1,1]])
+        y=np.array([[0,1,1],[0,0,0]])
+        z=np.array([[0,0,0],[1,1,1]])
+        resx, resy, resz=self.tr1.apply_point(x,y,z)
+        npt.assert_equal(resx.shape, x.shape)
+        npt.assert_equal(resy.shape, y.shape)
+        npt.assert_equal(resz.shape, z.shape)
+        npt.assert_almost_equal([resx[0,0], resy[0,0], resz[0,0]], [1., 0., 0.])
+        npt.assert_almost_equal([resx[0,1], resy[0,1], resz[0,1]], [1., 1., 0.])
+        npt.assert_almost_equal([resx[0,2], resy[0,2], resz[0,2]], [1., 1., 0.])
+        npt.assert_almost_equal(np.linalg.norm([resx[1,0], resy[1,0], resz[1,0]]), 1e-9)
+        npt.assert_almost_equal([resx[1,1], resy[1,1], resz[1,1]], [0., 0., 1.])
+        npt.assert_almost_equal([resx[1,2], resy[1,2], resz[1,2]], [0., 0., 1.])
     def test_transform_at_height(self):
         self.universe.get_frame('local').pos = [0., 0., 10.]
         self.tr1=self.universe.get_transformation('local','ball')
-        res1 = self.tr1.apply_point([0., 0., 0.])
+        res1 = self.tr1.apply_point(0., 0., 0.)
         npt.assert_almost_equal(res1, [11, 0, 0])
-        res2 = self.tr1.apply_point([1., 0., 0.])
+        res2 = self.tr1.apply_point(1., 0., 0.)
         npt.assert_almost_equal(res2, [11., 0., 1.])
-        res3 = self.tr1.apply_point([0., 1., 0.])
+        res3 = self.tr1.apply_point(0., 1., 0.)
         npt.assert_almost_equal(res3, [11., 1., 0.])
-        res4 = self.tr1.apply_point([0., 0., 11.])
+        res4 = self.tr1.apply_point(0., 0., 11.)
         npt.assert_almost_equal(np.linalg.norm(res4), 1e-9)
     def test_position_transform_on_north_pole(self):
         self.universe.get_frame('local').pos = [90., 0., 0.]
         self.tr1=self.universe.get_transformation('local','ball')
-        res1 = self.tr1.apply_point([0., 0., 0.])
+        res1 = self.tr1.apply_point(0., 0., 0.)
         npt.assert_almost_equal(res1, [0., 0., 1.])
-        res2 = self.tr1.apply_point([1., 0., 0.])
+        res2 = self.tr1.apply_point(1., 0., 0.)
         npt.assert_almost_equal(res2, [-1., 0., 1.])
-        res3 = self.tr1.apply_point([0., 1., 0.])
+        res3 = self.tr1.apply_point(0., 1., 0.)
         npt.assert_almost_equal(res3, [0., 1., 1.])
-        res4 = self.tr1.apply_point([0., 0., 1.])
+        res4 = self.tr1.apply_point(0., 0., 1.)
         npt.assert_almost_equal(np.linalg.norm(res4), 1e-9)
     def test_position_transform_45_west(self):
         self.universe.get_frame('local').pos = [0., -45., 0.]
         self.tr1=self.universe.get_transformation('local','ball')
-        res1 = self.tr1.apply_point([0., 0., 0.])
+        res1 = self.tr1.apply_point(0., 0., 0.)
         npt.assert_almost_equal(res1, [np.sin(np.pi/4), -np.sin(np.pi/4), 0])
-        res2 = self.tr1.apply_point([1., 0., 0.])
+        res2 = self.tr1.apply_point(1., 0., 0.)
         npt.assert_almost_equal(res2, [np.sin(np.pi/4), -np.sin(np.pi/4), 1])
-        res3 = self.tr1.apply_point([0., 1., 0.])
+        res3 = self.tr1.apply_point(0., 1., 0.)
         npt.assert_almost_equal(res3, [np.sqrt(2), 0., 0.])
-        res4 = self.tr1.apply_point([0., 0., 1.])
+        res4 = self.tr1.apply_point(0., 0., 1.)
         npt.assert_almost_equal(np.linalg.norm(res4), 1e-9)
     def test_position_transform_nested_on_north_pole(self):
         ball=mnt.OblateEllipsoidFrame(1,1)
@@ -298,13 +312,13 @@ class Ball(TestCase):
         ball.add_child(intermediate)
         universe=mnt.CoordinateUniverse('uni', ball)
         tr1=universe.get_transformation('local','ball')
-        res1 = tr1.apply_point([0., 0., 0.])
+        res1 = tr1.apply_point(0., 0., 0.)
         npt.assert_almost_equal(res1, [0,0,1])
-        res2 = tr1.apply_point([1., 0., 0.])
+        res2 = tr1.apply_point(1., 0., 0.)
         npt.assert_almost_equal(res2, [0,0,2])
-        res3 = tr1.apply_point([0., 1., 0.])
+        res3 = tr1.apply_point(0., 1., 0.)
         npt.assert_almost_equal(res3, [0,1,1])
-        res4 = tr1.apply_point([-1,0,0])
+        res4 = tr1.apply_point(-1,0,0)
         npt.assert_almost_equal(np.linalg.norm(res4), 1e-9)
 
 

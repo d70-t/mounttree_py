@@ -1,4 +1,4 @@
-from debug import debug
+from .debug import debug
 import numpy as np
 def deg2rad(deg):
     return deg/180.0*np.pi
@@ -200,10 +200,14 @@ class Transform(object):
     def __init__(self, M):
         assert(isinstance(M, np.ndarray))
         self.M=M
-    def apply_point(self, p):
-        return (self.M @ np.append(p,1))[:3]
-    def apply_direction(self, v):
-        return (self.M @ np.append(v,0))[:3]
+    def apply_point(self, x,y,z):
+        p=np.stack([x,y,z,np.ones_like(x)])
+        result=np.tensordot(self.M,p,(1,0))
+        return result[0],result[1], result[2]
+    def apply_direction(self, x,y,z):
+        p=np.stack([x,y,z,np.zeros_like(x)])
+        result=np.tensordot(self.M,p,(1,0))
+        return result[0],result[1], result[2]
     def __mul__(self, o):
         assert(isinstance(o,Transform))
         if self.__class__==o.__class__:
