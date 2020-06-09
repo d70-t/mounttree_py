@@ -4,8 +4,6 @@ import numpy as np
 import mounttree.mounttree as mnt
 import re as reg
 
-# data=yaml.load(open('/project/meteo/work/Paul.Ockenfuss/Software/runmacs/test/test_geometry/testmounttree.yaml'))
-# tree=data['mounttree']
 def load_mounttree(filename):
     with open(filename) as f:
         tree=yaml.load(f)
@@ -48,9 +46,3 @@ def convert_rot_string(rot_string):
             angle=mnt.deg2rad(angle)
         rot=mnt.Rotation.fromAngle(angle, axis)*rot
     return rot
-     
-
-    
-
-# load_mounttree('/project/meteo/work/Paul.Ockenfuss/Software/runmacs/test/test_geometry/testmounttree.yaml')
-load_mounttree('/project/meteo/work/Paul.Ockenfuss/Software/mounttree_py/eurec4a_pretest_mounttree.yaml')
