@@ -3,7 +3,6 @@ import unittest
 import numpy.testing as npt
 import numpy as np
 import sys as sys
-# sys.path.append('/home/p/Paul.Ockenfuss/Work/Software/mounttree_py/src/')
 import mounttree as mio
 import os
 
