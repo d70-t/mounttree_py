@@ -1,7 +1,7 @@
 import yaml
 import mounttree.mounttree as mnt
 import numpy as np
-import re as reg
+import re
 
 
 def load_mounttree(filename):
@@ -45,7 +45,7 @@ def find_sensors_in_tree(mounttree):
     return dict(_find_sensors_in_tree(mounttree))
 
 def convert_rot_string(rot_string):
-    reRotPrimitive = reg.compile(
+    reRotPrimitive = re.compile(
             '^R([xyz])\\((-?[0-9]+(?:\\.[0-9]*)?)((?:deg|rad)?)\\)$')
     rsplit = rot_string.split("*")
     rot = mnt.Rotation.Identity()
