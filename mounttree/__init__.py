@@ -1,5 +1,6 @@
 import yaml
 import mounttree.mounttree as mnt
+import numpy as np
 import re as reg
 
 
@@ -54,6 +55,6 @@ def convert_rot_string(rot_string):
         axis, angle, unit = m.groups()
         angle = float(angle)
         if unit == 'deg':
-            angle = mnt.deg2rad(angle)
+            angle = np.deg2rad(angle)
         rot = mnt.Rotation.fromAngle(angle, axis)*rot
     return rot

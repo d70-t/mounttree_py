@@ -120,8 +120,8 @@ class BasicTests(TestCase):
 
 class TransformTest(TestCase):
     def test_rotation_inverse(self):
-        rot = mnt.Rotation.fromAngle(mnt.deg2rad(77), 'x')
-        rot = mnt.Rotation.fromAngle(mnt.deg2rad(48), 'z') * rot
+        rot = mnt.Rotation.fromAngle(np.deg2rad(77), 'x')
+        rot = mnt.Rotation.fromAngle(np.deg2rad(48), 'z') * rot
         assert(isinstance(rot, mnt.Rotation))
         roti = rot.invert()
         ident = rot * roti
@@ -136,8 +136,8 @@ class TransformTest(TestCase):
 
     def test_transform_inverse(self):
         trans = mnt.Translation.fromPoint([2, 5, 77.8])
-        rot = mnt.Rotation.fromAngle(mnt.deg2rad(77), 'x')
-        rot = mnt.Rotation.fromAngle(mnt.deg2rad(48), 'z') * rot
+        rot = mnt.Rotation.fromAngle(np.deg2rad(77), 'x')
+        rot = mnt.Rotation.fromAngle(np.deg2rad(48), 'z') * rot
         transform = rot * trans * rot
         assert(type(transform) == mnt.Transform)
         transformi = transform.invert()
@@ -224,10 +224,10 @@ class StabilizationTest(TestCase):
         self.pitch = 0  # np.pi/9.
         self.yaw = -np.pi
         stabilized.pos = [self.lat, self.lon, self.height]
-        stabilized.euler = [0, 0, mnt.rad2deg(self.yaw)]
+        stabilized.euler = [0, 0, np.rad2deg(self.yaw)]
         halo = mnt.CartesianCoordinateFrame()
         halo.name = 'HALO'
-        halo.euler = [mnt.rad2deg(self.roll), mnt.rad2deg(self.pitch), 0]
+        halo.euler = [np.rad2deg(self.roll), np.rad2deg(self.pitch), 0]
         stabilized.add_child(halo)
         earth.add_child(stabilized)
         self.universe = mnt.CoordinateUniverse('uni', earth)

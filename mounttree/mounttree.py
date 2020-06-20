@@ -1,14 +1,6 @@
 import numpy as np
 
 
-def deg2rad(deg):
-    return deg/180.0*np.pi
-
-
-def rad2deg(rad):
-    return rad/np.pi*180.0
-
-
 class FrameNotFoundError(Exception):
     pass
 
@@ -103,9 +95,9 @@ class CoordinateFrame(object):
     def rotation(self):
         if self.__rotation is None:
             # Build new from euler angles
-            roll = Rotation.fromAngle(deg2rad(self.euler[0]), "x")
-            pitch = Rotation.fromAngle(deg2rad(self.euler[1]), "y")
-            yaw = Rotation.fromAngle(deg2rad(self.euler[2]), "z")
+            roll = Rotation.fromAngle(np.deg2rad(self.euler[0]), "x")
+            pitch = Rotation.fromAngle(np.deg2rad(self.euler[1]), "y")
+            yaw = Rotation.fromAngle(np.deg2rad(self.euler[2]), "z")
             return yaw * pitch * roll
         return self.__rotation
 
@@ -204,8 +196,8 @@ class OblateEllipsoidFrame(CoordinateFrame):
     def toCartesian(self, natural):
         # follows http://www.navipedia.net/index.php/Ellipsoidal_and_Cartesian_Coordinates_Conversion # noqa: E501
         lat, lon, height = natural
-        rlat = lat * np.pi / 180
-        rlon = lon * np.pi / 180
+        rlat = np.deg2rad(lat)
+        rlon = np.deg2rad(lon)
         slat = np.sin(rlat)
         clat = np.cos(rlat)
         slon = np.sin(rlon)
@@ -228,12 +220,12 @@ class OblateEllipsoidFrame(CoordinateFrame):
             Nlat = self._Nlat(np.sin(rlat))
             height = xbase / np.cos(rlat) - Nlat
             rlat = np.arctan2(z, (1 - eps2 * (Nlat / (Nlat + height))) * xbase)
-        return [180*rlat/np.pi, 180*rlon/np.pi, height]
+        return [np.rad2deg(rlat), np.rad2deg(rlon), height]
 
     def getLocalFrameRotation(self, natural_location):
         return (Rotation.fromAngle(-np.pi/2, 'y') *
-                Rotation.fromAngle(deg2rad(natural_location[1]), 'x') *
-                Rotation.fromAngle(-deg2rad(natural_location[0]), 'y'))
+                Rotation.fromAngle(np.deg2rad(natural_location[1]), 'x') *
+                Rotation.fromAngle(-np.deg2rad(natural_location[0]), 'y'))
         # !!! Why is cpp and py version different in order?
         # return reduce(M.mmul, (Ry(-M.deg2rad(position.natural[0])),
         #                        Rx(M.deg2rad(position.natural[1])),
