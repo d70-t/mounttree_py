@@ -5,7 +5,7 @@ import re as reg
 
 def load_mounttree(filename):
     with open(filename) as f:
-        tree = yaml.load(f)
+        tree = yaml.load(f, Loader=yaml.SafeLoader)
     name = tree['description']['name']
     tree = tree['mounttree']
     root_frame = create_from_yaml(tree)
