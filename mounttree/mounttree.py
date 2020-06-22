@@ -110,9 +110,8 @@ class CoordinateFrame(object):
         self.__rotation = rotation
 
     def __str__(self):
-        return f"Name: {self.name}\n" \
-               f"Position: {self.pos}\n" \
-               f"Rotation: {self.rotation}"
+        return "Name: {}\nPosition: {}\nRotation: {}".format(
+                self.name, self.pos, self.rotation)
 
     def get_frame(self, framename):
         if self.name == framename:

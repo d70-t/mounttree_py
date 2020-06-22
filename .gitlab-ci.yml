@@ -7,3 +7,28 @@ flake8:
     - pip install numpy pyyaml
   script:
     - python -m flake8 .
+
+.test:
+  tags:
+    - docker.meteo.physik.lmu.de
+  before_script:
+    - pip install pytest
+    - pip install numpy pyyaml
+  script:
+    - python -m pytest test
+
+test-3.5:
+  extends: .test
+  image: python:3.5
+
+test-3.6:
+  extends: .test
+  image: python:3.6
+
+test-3.7:
+  extends: .test
+  image: python:3.7
+
+test-3.8:
+  extends: .test
+  image: python:3.8
