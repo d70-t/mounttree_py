@@ -22,10 +22,14 @@ coordinate_lib = {
 
 
 class CoordinateUniverse(object):
-    def __init__(self, name, root_frame, variables={}):
+    def __init__(self, name, root_frame, variables={}, sensors=None):
         self.name = name
         self.root_frame = root_frame
         self.variables = variables
+        if sensors is None:
+            self.sensors = {}
+        else:
+            self.sensors = sensors
 
     def find_path_to_frame(self, framename):
         return self.root_frame.find_path_to_frame(framename)
