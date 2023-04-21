@@ -18,7 +18,7 @@ class CoordinateUniverse(object):
         self.name = name
         self.root_frame = root_frame
         self.variables = variables
-        self.loc_count = loc_count #this defines the number of positions of the mounttree
+        self.loc_count = loc_count  # Number of positions of mounttree
 
     def find_path_to_frame(self, framename):
         return self.root_frame.find_path_to_frame(framename)
@@ -33,7 +33,7 @@ class CoordinateUniverse(object):
         p1 = self.find_path_to_frame(start)
         p2 = self.find_path_to_frame(to)
         prefix = self.root_frame
-        while(p1 and p2 and p1[0] is p2[0]):
+        while (p1 and p2 and p1[0] is p2[0]):
             prefix = p1[0]
             p1 = p1[1:]
             p2 = p2[1:]
@@ -45,8 +45,7 @@ class CoordinateUniverse(object):
         for k in kwargs:
             kwargs[k] = np.array(kwargs[k])
         if kwargs:
-            #import pdb; pdb.set_trace()
-            #if something inside kwargs...use len of any dict element from kwargs
+            # If something inside kwargs: use len of any dict element
             loc_count = (next(iter(kwargs.values()))).size
         else:
             loc_count = 0
@@ -102,9 +101,12 @@ class CoordinateFrame(object):
     def rotation(self):
         if self.__rotation is None:
             # Build new from euler angles
-            roll = Rotation.fromAngle(np.deg2rad(np.array(self.euler[0])), "x", self.loc_count)
-            pitch = Rotation.fromAngle(np.deg2rad(np.array(self.euler[1])), "y", self.loc_count)
-            yaw = Rotation.fromAngle(np.deg2rad(np.array(self.euler[2])), "z", self.loc_count)
+            roll = Rotation.fromAngle(np.deg2rad(self.euler[0]),
+                                      "x", self.loc_count)
+            pitch = Rotation.fromAngle(np.deg2rad(self.euler[1]),
+                                       "y", self.loc_count)
+            yaw = Rotation.fromAngle(np.deg2rad(self.euler[2]),
+                                     "z", self.loc_count)
             return yaw * pitch * roll
         return self.__rotation
 
@@ -152,15 +154,13 @@ class CoordinateFrame(object):
             return Rotation.Identity(self.loc_count)
         child_to_self = self.get_transform_child(path[0])
         final_to_child = path[0].collect_transform(path[1:])
-        #matrix_multi =  np.einsum('ln...,nd...->ld...',child_to_self.M, final_to_child.M)
-        #return Transform(matrix_multi)
         return child_to_self * final_to_child
 
     def update(self, **kwargs):
         for k in kwargs:
             kwargs[k] = np.array(kwargs[k])
         if kwargs:
-            #if something inside kwargs...use len of any dict element from kwargs
+            # If something inside kwargs: use len of any dict element
             loc_count = (next(iter(kwargs.values()))).size
         else:
             loc_count = 0
@@ -241,8 +241,10 @@ class OblateEllipsoidFrame(CoordinateFrame):
 
     def getLocalFrameRotation(self, natural_location):
         return (Rotation.fromAngle(np.array(-np.pi/2), 'y', self.loc_count) *
-                Rotation.fromAngle(np.deg2rad(np.array(natural_location[1])), 'x', self.loc_count) *
-                Rotation.fromAngle(-np.deg2rad(np.array(natural_location[0])), 'y', self.loc_count))
+                Rotation.fromAngle(np.deg2rad(natural_location[1]),
+                                   'x', self.loc_count) *
+                Rotation.fromAngle(-np.deg2rad(natural_location[0]),
+                                   'y', self.loc_count))
 
         # !!! Why is cpp and py version different in order?
         # return reduce(M.mmul, (Ry(-M.deg2rad(position.natural[0])),
@@ -252,33 +254,33 @@ class OblateEllipsoidFrame(CoordinateFrame):
 
 class Transform(object):
     def __init__(self, M):
-        assert(isinstance(M, np.ndarray))
+        assert (isinstance(M, np.ndarray))
         self.M = M
 
     def apply_point(self, x, y, z):
         p = np.stack([x, y, z, np.ones_like(x)])
         result = np.tensordot(self.M, p, (1, 0))
-        #check if result has shape (4,1),
-        #if yes, keep only (4,) shape: mounttree was used for only one position
+        # Check if result has shape (4,1),
+        # If yes, keep only (4,) shape (mounttree was used for one position)
         if len(result.shape) > 1:
             if result.shape[1] == 1:
-                result = result[...,0]
+                result = result[..., 0]
         return result[0], result[1], result[2]
 
     def apply_direction(self, x, y, z):
         p = np.stack([x, y, z, np.zeros_like(x)])
         result = np.tensordot(self.M, p, (1, 0))
-        #check if result has shape (4,1),
-        #if yes, keep only (4,) shape: mounttree was used for only one position
+        # Check if result has shape (4,1),
+        # If yes, keep only (4,) shape (mounttree was used for one position)
         if len(result.shape) > 1:
             if result.shape[1] == 1:
-                result = result[...,0]        
+                result = result[..., 0]
         return result[0], result[1], result[2]
 
     def __mul__(self, o):
         if self.__class__ == o.__class__:
-            return self.__class__(np.einsum('ln...,nd...->ld...',self.M, o.M))
-        return Transform(np.einsum('ln...,nd...->ld...',self.M, o.M))
+            return self.__class__(np.einsum('ln...,nd...->ld...', self.M, o.M))
+        return Transform(np.einsum('ln...,nd...->ld...', self.M, o.M))
 
     def __str__(self):
         return repr(self.M)
@@ -288,7 +290,8 @@ class Transform(object):
 
     def invert(self):
         if self.M.ndim == 3:
-            return self.__class__((np.linalg.inv(self.M.transpose(2,0,1))).transpose(1,2,0))
+            return self.__class__((np.linalg.inv(self.M.transpose(2, 0, 1)))
+                                  .transpose(1, 2, 0))
         else:
             return self.__class__(np.linalg.inv(self.M))
 
@@ -327,18 +330,15 @@ class Rotation(Transform):
     def invert(self):
         newM = self.M.copy()
         if newM.ndim == 3:
-            newM = newM.transpose(1,0,2)
+            newM = newM.transpose(1, 0, 2)
         elif newM.ndim == 2:
             newM = newM.T
         return self.__class__(newM)
 
     def __mul__(self, o):
         if self.__class__ == o.__class__:
-            #return self.__class__(self.M @ o.M)
-            return self.__class__(np.einsum('ln...,nd...->ld...',self.M, o.M))        
-            #return Transform(self.M @ o.M)
-        return Transform(np.einsum('ln...,nd...->ld...',self.M, o.M))
-    
+            return self.__class__(np.einsum('ln...,nd...->ld...', self.M, o.M))
+        return Transform(np.einsum('ln...,nd...->ld...', self.M, o.M))
 
 
 class Translation(Transform):
@@ -362,7 +362,5 @@ class Translation(Transform):
     def __mul__(self, o):
 
         if self.__class__ == o.__class__:
-            #return self.__class__(self.M @ o.M)
-            return self.__class__(np.einsum('ln...,nd...->ld...',self.M, o.M))
-            #return Transform(self.M @ o.M)
-        return Transform(np.einsum('ln...,nd...->ld...',self.M, o.M))
+            return self.__class__(np.einsum('ln...,nd...->ld...', self.M, o.M))
+        return Transform(np.einsum('ln...,nd...->ld...', self.M, o.M))

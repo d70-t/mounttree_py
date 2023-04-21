@@ -122,29 +122,27 @@ class TransformTest(TestCase):
     def test_rotation_inverse(self):
         rot = mnt.Rotation.fromAngle(np.deg2rad(77), 'x', 1)
         rot = mnt.Rotation.fromAngle(np.deg2rad(48), 'z', 1) * rot
-        assert(isinstance(rot, mnt.Rotation))
-        #roti = rot.invert()
-        roti = np.linalg.inv(rot.M[...,0])
-        ident = np.dot(rot.M[...,0], roti)
-        npt.assert_almost_equal(ident, np.eye(4))
+        assert (isinstance(rot, mnt.Rotation))
+        roti = rot.invert()
+        ident = rot * roti
+        npt.assert_almost_equal(ident.M[..., 0], np.eye(4))
 
     def test_translation_inverse(self):
         trans = mnt.Translation.fromPoint([2, 5, 77.8], 1)
-        assert(isinstance(trans, mnt.Translation))
+        assert (isinstance(trans, mnt.Translation))
         transi = trans.invert()
         ident = trans*transi
-        npt.assert_almost_equal(ident.M, np.eye(4).reshape(4,4,1))
+        npt.assert_almost_equal(ident.M, np.eye(4).reshape(4, 4, 1))
 
     def test_transform_inverse(self):
         trans = mnt.Translation.fromPoint([2, 5, 77.8], 1)
         rot = mnt.Rotation.fromAngle(np.deg2rad(77), 'x', 1)
         rot = mnt.Rotation.fromAngle(np.deg2rad(48), 'z', 1) * rot
         transform = rot * trans * rot
-        assert(type(transform) == mnt.Transform)
-        #transformi = transform.invert()
-        transformi = mnt.Transform((np.linalg.inv(transform.M.transpose(2,0,1))).transpose(1,2,0))
+        assert (type(transform) == mnt.Transform)
+        transformi = transform.invert()
         ident = transform*transformi
-        npt.assert_almost_equal(ident.M, np.eye(4).reshape(4,4,1))
+        npt.assert_almost_equal(ident.M, np.eye(4).reshape(4, 4, 1))
 
 
 class EarthTest(TestCase):
@@ -211,6 +209,7 @@ class EarthTest(TestCase):
         npt.assert_almost_equal(
             res,
             universe.get_frame('earth').toCartesian([45, 45, 0]))
+
 
 class StabilizationTest(TestCase):
     def setUp(self):
