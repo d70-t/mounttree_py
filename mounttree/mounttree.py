@@ -39,16 +39,7 @@ class CoordinateUniverse(object):
             p2 = p2[1:]
         from_transform = prefix.collect_transform(p1)
         to_transform = prefix.collect_transform(p2)
-        #return to_transform.invert() * from_transform
-        if len(to_transform.M.shape) > 2:
-            inverted = (np.linalg.inv(to_transform.M.transpose(2,0,1))).transpose(1,2,0)
-        else:
-            #print("in .invert()")
-            inverted = to_transform.invert().M
-        #matrix_multi =  np.einsum('ln...,nd...->ld...', inverted, from_transform.M)
-        #return Transform(matrix_multi)
-        inverted = Transform(inverted)
-        return inverted * from_transform
+        return to_transform.invert() * from_transform
 
     def update(self, **kwargs):
         for k in kwargs:
@@ -296,8 +287,10 @@ class Transform(object):
         return self.M == self.o
 
     def invert(self):
-        #return self.__class__(np.linalg.inv(self.M.transpose(2,0,1))).transpose(1,2,0)
-        return self.__class__(np.linalg.inv(self.M))
+        if self.M.ndim == 3:
+            return self.__class__((np.linalg.inv(self.M.transpose(2,0,1))).transpose(1,2,0))
+        else:
+            return self.__class__(np.linalg.inv(self.M))
 
 
 class Rotation(Transform):
@@ -333,8 +326,10 @@ class Rotation(Transform):
 
     def invert(self):
         newM = self.M.copy()
-        newM = newM.T
-        print(self.M.shape, "mrotationt")
+        if newM.ndim == 3:
+            newM = newM.transpose(1,0,2)
+        elif newM.ndim == 2:
+            newM = newM.T
         return self.__class__(newM)
 
     def __mul__(self, o):
