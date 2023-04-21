@@ -23,6 +23,7 @@ def create_from_yaml(mounttree):
     rhs.name = mounttree['framename']
     if 'position' in mounttree:
         rhs.pos = mounttree['position']
+        #rhs.loc_num = m
     if 'rotation' in mounttree:
         rot_input = mounttree['rotation']
         if isinstance(rot_input, list):
@@ -48,7 +49,8 @@ def convert_rot_string(rot_string):
     reRotPrimitive = re.compile(
             '^R([xyz])\\((-?[0-9]+(?:\\.[0-9]*)?)((?:deg|rad)?)\\)$')
     rsplit = rot_string.split("*")
-    rot = mnt.Rotation.Identity()
+    loc_count = 1 #define number of positions that mounttree is updated with
+    rot = mnt.Rotation.Identity(loc_count)
     for s in rsplit:
         m = reRotPrimitive.match(s)
         assert(m is not None)
@@ -56,5 +58,5 @@ def convert_rot_string(rot_string):
         angle = float(angle)
         if unit == 'deg':
             angle = np.deg2rad(angle)
-        rot = mnt.Rotation.fromAngle(angle, axis)*rot
+        rot = mnt.Rotation.fromAngle(angle, axis, loc_count)*rot
     return rot
