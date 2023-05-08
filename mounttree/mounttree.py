@@ -259,7 +259,7 @@ class Transform(object):
 
     def apply_point(self, x, y, z):
         p = np.stack([x, y, z, np.ones_like(x)])
-        result = np.tensordot(self.M, p, (1, 0))
+        result = np.einsum('mn...,n...->m...', self.M, p)
         # Check if result has shape (4,1),
         # If yes, keep only (4,) shape (mounttree was used for one position)
         if len(result.shape) > 1:
@@ -269,7 +269,7 @@ class Transform(object):
 
     def apply_direction(self, x, y, z):
         p = np.stack([x, y, z, np.zeros_like(x)])
-        result = np.tensordot(self.M, p, (1, 0))
+        result = np.einsum('mn...,n...->m...', self.M, p)
         # Check if result has shape (4,1),
         # If yes, keep only (4,) shape (mounttree was used for one position)
         if len(result.shape) > 1:
