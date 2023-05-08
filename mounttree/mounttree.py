@@ -48,7 +48,7 @@ class CoordinateUniverse(object):
             # If something inside kwargs: use len of any dict element
             loc_count = (next(iter(kwargs.values()))).size
         else:
-            loc_count = 0
+            loc_count = 1
         self.loc_count = loc_count
         self.variables.update(kwargs)
         self.root_frame.update(**kwargs)
@@ -59,7 +59,7 @@ class CoordinateUniverse(object):
 
 
 class CoordinateFrame(object):
-    def __init__(self, variables={}, loc_count=0):
+    def __init__(self, variables={}, loc_count=1):
         self.variables = variables
         self.children = []
         self.pos = [0, 0, 0]
@@ -163,7 +163,7 @@ class CoordinateFrame(object):
             # If something inside kwargs: use len of any dict element
             loc_count = (next(iter(kwargs.values()))).size
         else:
-            loc_count = 0
+            loc_count = 1
         self.loc_count = loc_count
         self.variables.update(kwargs)
         for child in self.children:
