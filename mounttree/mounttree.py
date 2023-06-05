@@ -14,7 +14,7 @@ coordinate_lib = {
 
 
 class CoordinateUniverse(object):
-    def __init__(self, name, root_frame, variables={}, loc_count=0):
+    def __init__(self, name, root_frame, variables={}, loc_count=1):
         self.name = name
         self.root_frame = root_frame
         self.variables = variables
