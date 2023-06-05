@@ -52,6 +52,21 @@ class TestMountTree(TestCase):
         npt.assert_almost_equal(earth.toNatural(tr3.apply_point(0, 0, 0)),
                                 [0, 0, 30])
 
+    def test_updates3(self):
+        # Update mounttree with two HALO positions
+        self.universe.update(lat=[0, 0], lon=[0, 0], height=[10, 50],
+                             roll=[0, 0], pitch=[0, 0], yaw=[0, 0])
+        earth = self.universe.get_frame('EARTH')
+        npt.assert_almost_equal(self.universe.get_frame('HALO').pos,
+                                [[0, 0], [0, 0], [10, 50]])
+        tr1 = self.universe.get_transformation('HALO', 'EARTH')
+        self.universe.update(height=[20, 20])
+        tr2 = self.universe.get_transformation('HALO', 'EARTH')
+        npt.assert_almost_equal(earth.toNatural(tr1.apply_point(0, 0, 0)),
+                                [[0, 0], [0, 0], [10, 50]])
+        npt.assert_almost_equal(earth.toNatural(tr2.apply_point(0, 0, 0)),
+                                [[0, 0], [0, 0], [20, 20]])
+
 
 if __name__ == '__main__':
     unittest.main()

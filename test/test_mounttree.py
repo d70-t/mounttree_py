@@ -260,6 +260,63 @@ class StabilizationTest(TestCase):
                                 0)
 
 
+class StabilizationTestMultipleLocations(TestCase):
+    def setUp(self):
+        earth = mnt.coordinate_lib['WGS-84']()
+        earth.loc_count = 2
+        earth.name = 'earth'
+        stabilized = mnt.CartesianCoordinateFrame()
+        stabilized.name = 'stabilized'
+        stabilized.loc_count = 2
+        self.lat = [10., 10.]
+        self.lon = [15., 15.]
+        self.height = [7000., 7000.]
+        self.roll = [np.pi/6., np.pi/6.]
+        self.pitch = [0, 0]  # np.pi/9.
+        self.yaw = [-np.pi, -np.pi]
+        self.loc_count = 2
+        stabilized.pos = [self.lat, self.lon, self.height]
+        stabilized.euler = [[0, 0], [0, 0], np.rad2deg(self.yaw)]
+        halo = mnt.CartesianCoordinateFrame()
+        halo.name = 'HALO'
+        halo.euler = [np.rad2deg(self.roll), np.rad2deg(self.pitch), [0, 0]]
+        halo.loc_count = 2
+        stabilized.add_child(halo)
+        earth.add_child(stabilized)
+        self.universe = mnt.CoordinateUniverse('uni', earth, loc_count=2)
+
+    def test_roll_correction_multiple_locations(self):
+        transform = self.universe.get_transformation('HALO', 'stabilized')
+        res = transform.apply_direction(0, 1, 0)
+        npt.assert_almost_equal(res, [[0, 0], np.cos(self.roll),
+                                      np.sin(self.roll)])
+
+    def test_plane2plane_multiple_locations(self):
+        plane2 = mnt.CartesianCoordinateFrame()
+        plane2.name = 'plane2'
+        plane2.pos = [[10.1, 10.1], [15.2, 15.2], [7500., 7500.]]
+        plane2.euler = [[0, 0], [0.1, 0.1], [0.2, 0.2]]
+        plane2.loc_count = 2
+        self.universe.get_frame('earth').add_child(plane2)
+        tr1 = self.universe.get_transformation("HALO", 'plane2')
+        tr2 = self.universe.get_transformation("plane2", "HALO")
+        res1 = tr1.apply_point(0, 0, 0)
+        res2 = tr2.apply_point(0, 0, 0)
+        res3 = tr2.apply_point(100, 0, 0)
+        res4 = tr2.apply_point(*tr1.apply_point(24, 745., 812))
+        res2 = np.array(res2)
+        res3 = np.array(res3)
+        res4 = np.array(res4)
+
+        npt.assert_almost_equal(np.linalg.norm(res1), np.linalg.norm(res2))
+        npt.assert_almost_equal(np.linalg.norm((res3 - res2)[..., 0]), 100)
+        npt.assert_almost_equal(np.linalg.norm((res3 - res2)[..., 1]), 100)
+        npt.assert_almost_equal(np.linalg.norm(res4 -
+                                               np.array([[24, 24],
+                                                         [745., 745.],
+                                                         [812, 812]])), 0)
+
+
 class Ball(TestCase):
     def setUp(self):
         ball = mnt.OblateEllipsoidFrame(1, 1)
