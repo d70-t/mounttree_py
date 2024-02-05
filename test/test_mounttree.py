@@ -139,7 +139,7 @@ class TransformTest(TestCase):
         rot = mnt.Rotation.fromAngle(np.deg2rad(77), 'x', 1)
         rot = mnt.Rotation.fromAngle(np.deg2rad(48), 'z', 1) * rot
         transform = rot * trans * rot
-        assert (type(transform) == mnt.Transform)
+        assert (type(transform) is mnt.Transform)
         transformi = transform.invert()
         ident = transform*transformi
         npt.assert_almost_equal(ident.M, np.eye(4).reshape(4, 4, 1))
