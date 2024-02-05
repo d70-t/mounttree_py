@@ -65,6 +65,14 @@ print(p2)
 (array([0., 0.]), array([1., 1.]), array([0., 0.]))
 ```
 
+For the transformation of the same but multiple points/directions to different HALO positions, repeat the array according to the number of positions. For example, the transformation of the different viewing angles of a polarization camera of specMACS (`view_dirs_HALO_coords` with shape `(2040, 2440, 3)`) from 'HALO' to 'EARTH' coordinates for the two different positions would look like this: 
+```python
+vx, vy, vz = transform_multiple_locations.apply_direction(*np.array([view_dirs_HALO_coords, view_dirs_HALO_coords]).transpose(3,1,2,0))
+view_dirs_EARTH_coords = np.stack([xv, vy, vz])
+print(view_dirs_EARTH_coords.shape)
+(2, 2040, 2440, 3)
+```
+
 In the next example, we will apply the transformation to two different points which correspond to the two different HALO positions:
 ```python
 import numpy as np
