@@ -23,17 +23,17 @@ universe=mnt.load_mounttree('test/testmounttree.yaml')
 ```
 If there are open variables in the tree, specify them before use:
 ```python
-universe.update(lat=0, lon=0, height=10,roll=0, pitch=0, yaw=0)
+universe.update(lat=0, lon=0, height=10, roll=0, pitch=0, yaw=0)
 ```
 
 Now, we can get a transformation from 'HALO' to 'EARTH' coordinates
 ```python
-transform=self.universe.get_transformation('HALO','EARTH')
+transform=universe.get_transformation('HALO','EARTH')
 ```
 Use the transformation to convert positional or direction vectors
 ```python
-p1=transform.apply_point(0,0,0)
-p2=transform.apply_direction(0,1,0)
+p1=transform.apply_point(0, 0, 0)
+p2=transform.apply_direction(0, 1, 0)
 ```
 We can also convert multiple points at once, if we provide numpy arrays of coordinates.
 ```python
@@ -43,6 +43,52 @@ y=np.array([[0,1,1],[0,0,0]])
 z=np.array([[0,0,0],[1,1,1]])
 px, py, pz=transform.apply_point(x,y,z)
 ```
+
+We can also update the mounttree with multiple locations which differ, e.g., in the height coordinate as shown here:
+```python
+universe.update(lat=[0, 0], lon=[0, 0], height=[10, 100], roll=[0, 0], pitch=[0, 0], yaw=[0, 0])
+```
+
+Note: With `universe.variables`, you can have a look at the variables of the mounttree.
+
+We specify the transformation:
+```python
+transform_multiple_locations = universe.get_transformation('HALO','EARTH')
+```
+and apply the transformation as before. In this case, the point `(0, 0, 0)` and the direction `(0, 1, 0)` are transformed from 'HALO' to 'EARTH' for the two HALO positions defined above.
+```python
+p1 = transform_multiple_locations.apply_point(0,0,0)
+p2 = transform_multiple_locations.apply_direction(0,1,0)
+print(p1)
+(array([6378147., 6378237.]), array([0., 0.]), array([0., 0.]))
+print(p2)
+(array([0., 0.]), array([1., 1.]), array([0., 0.]))
+```
+
+For the transformation of the same but multiple points/directions to different HALO positions, repeat the array according to the number of positions. For example, the transformation of the different viewing angles of a polarization camera of specMACS (`view_dirs_HALO_coords` with shape `(2040, 2440, 3)`) from 'HALO' to 'EARTH' coordinates for the two different positions would look like this: 
+```python
+vx, vy, vz = transform_multiple_locations.apply_direction(*np.array([view_dirs_HALO_coords, view_dirs_HALO_coords]).transpose(3,1,2,0))
+view_dirs_EARTH_coords = np.stack([xv, vy, vz])
+print(view_dirs_EARTH_coords.shape)
+(2, 2040, 2440, 3)
+```
+
+In the next example, we will apply the transformation to two different points which correspond to the two different HALO positions:
+```python
+import numpy as np
+x = np.array([0, 0])
+y = np.array([0, 0])
+z = np.array([0, 333])
+px, py, pz = transform_multiple_locations.apply_point(x,y,z)
+```
+
+Again, we see the difference in the `px` element:
+```python
+print(px)
+array([6378147., 6377904.])
+```
+
+Note: So far, the combination (= transform N vectors at M different mounttree positions, which would result in N x M transformed vectors) is not possible. In this case, just loop over the smaller number of N or M.
 
 ## Mounttree
 ### Coordinate frames

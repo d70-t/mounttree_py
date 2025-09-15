@@ -13,7 +13,7 @@ class BasicTests(TestCase):
         halo.name = 'HALO'
         vnir = mnt.CartesianCoordinateFrame()
         vnir.name = 'VNIR'
-        vnir.rotation = mnt.Rotation.fromAngle(np.pi/2, 'z')
+        vnir.rotation = mnt.Rotation.fromAngle(np.pi/2, 'z', 1)
         halo.add_child(vnir)
         universe = mnt.CoordinateUniverse('universe', halo)
         child_transform = halo.get_transform_child(vnir)
@@ -59,7 +59,7 @@ class BasicTests(TestCase):
         halo.name = 'HALO'
         vnir = mnt.CartesianCoordinateFrame()
         vnir.name = 'VNIR'
-        vnir.rotation = mnt.Rotation.fromAngle(np.pi/2, 'z')
+        vnir.rotation = mnt.Rotation.fromAngle(np.pi/2, 'z', 1)
         halo.add_child(vnir)
         universe = mnt.CoordinateUniverse('universe', halo)
         transform = universe.get_transformation('HALO', 'VNIR')
@@ -70,10 +70,10 @@ class BasicTests(TestCase):
         halo.name = 'HALO'
         vnir = mnt.CartesianCoordinateFrame()
         vnir.name = 'VNIR'
-        vnir.rotation = mnt.Rotation.fromAngle(np.pi/2, 'z')
+        vnir.rotation = mnt.Rotation.fromAngle(np.pi/2, 'z', 1)
         swir = mnt.CartesianCoordinateFrame()
         swir.name = 'SWIR'
-        swir.rotation = mnt.Rotation.fromAngle(-np.pi/2, 'z')
+        swir.rotation = mnt.Rotation.fromAngle(-np.pi/2, 'z', 1)
         halo.add_child(vnir)
         halo.add_child(swir)
         universe = mnt.CoordinateUniverse('universe', halo)
@@ -85,10 +85,10 @@ class BasicTests(TestCase):
         halo.name = 'HALO'
         intermediate = mnt.CartesianCoordinateFrame()
         intermediate.name = 'INTER'
-        intermediate.rotation = mnt.Rotation.fromAngle(np.pi/2, 'z')
+        intermediate.rotation = mnt.Rotation.fromAngle(np.pi/2, 'z', 1)
         swir = mnt.CartesianCoordinateFrame()
         swir.name = 'SWIR'
-        swir.rotation = mnt.Rotation.fromAngle(np.pi/2, 'z')
+        swir.rotation = mnt.Rotation.fromAngle(np.pi/2, 'z', 1)
         intermediate.add_child(swir)
         halo.add_child(intermediate)
         universe = mnt.CoordinateUniverse('uni', halo)
@@ -120,29 +120,29 @@ class BasicTests(TestCase):
 
 class TransformTest(TestCase):
     def test_rotation_inverse(self):
-        rot = mnt.Rotation.fromAngle(mnt.deg2rad(77), 'x')
-        rot = mnt.Rotation.fromAngle(mnt.deg2rad(48), 'z') * rot
-        assert(isinstance(rot, mnt.Rotation))
+        rot = mnt.Rotation.fromAngle(np.deg2rad(77), 'x', 1)
+        rot = mnt.Rotation.fromAngle(np.deg2rad(48), 'z', 1) * rot
+        assert (isinstance(rot, mnt.Rotation))
         roti = rot.invert()
         ident = rot * roti
-        npt.assert_almost_equal(ident.M, np.eye(4))
+        npt.assert_almost_equal(ident.M[..., 0], np.eye(4))
 
     def test_translation_inverse(self):
-        trans = mnt.Translation.fromPoint([2, 5, 77.8])
-        assert(isinstance(trans, mnt.Translation))
+        trans = mnt.Translation.fromPoint([2, 5, 77.8], 1)
+        assert (isinstance(trans, mnt.Translation))
         transi = trans.invert()
         ident = trans*transi
-        npt.assert_almost_equal(ident.M, np.eye(4))
+        npt.assert_almost_equal(ident.M, np.eye(4).reshape(4, 4, 1))
 
     def test_transform_inverse(self):
-        trans = mnt.Translation.fromPoint([2, 5, 77.8])
-        rot = mnt.Rotation.fromAngle(mnt.deg2rad(77), 'x')
-        rot = mnt.Rotation.fromAngle(mnt.deg2rad(48), 'z') * rot
+        trans = mnt.Translation.fromPoint([2, 5, 77.8], 1)
+        rot = mnt.Rotation.fromAngle(np.deg2rad(77), 'x', 1)
+        rot = mnt.Rotation.fromAngle(np.deg2rad(48), 'z', 1) * rot
         transform = rot * trans * rot
-        assert(type(transform) == mnt.Transform)
+        assert (type(transform) is mnt.Transform)
         transformi = transform.invert()
         ident = transform*transformi
-        npt.assert_almost_equal(ident.M, np.eye(4))
+        npt.assert_almost_equal(ident.M, np.eye(4).reshape(4, 4, 1))
 
 
 class EarthTest(TestCase):
@@ -156,8 +156,8 @@ class EarthTest(TestCase):
                                 [0, -6378137.0, 0])
 
     def test_direction(self):
-        ned2enu = (mnt.Rotation.fromAngle(np.pi/2, 'z') *
-                   mnt.Rotation.fromAngle(np.pi, 'x'))
+        ned2enu = (mnt.Rotation.fromAngle(np.pi/2, 'z', 1) *
+                   mnt.Rotation.fromAngle(np.pi, 'x', 1))
         earth = mnt.coordinate_lib['WGS-84']()
         earth.name = 'earth'
         local = mnt.CartesianCoordinateFrame()
@@ -224,10 +224,10 @@ class StabilizationTest(TestCase):
         self.pitch = 0  # np.pi/9.
         self.yaw = -np.pi
         stabilized.pos = [self.lat, self.lon, self.height]
-        stabilized.euler = [0, 0, mnt.rad2deg(self.yaw)]
+        stabilized.euler = [0, 0, np.rad2deg(self.yaw)]
         halo = mnt.CartesianCoordinateFrame()
         halo.name = 'HALO'
-        halo.euler = [mnt.rad2deg(self.roll), mnt.rad2deg(self.pitch), 0]
+        halo.euler = [np.rad2deg(self.roll), np.rad2deg(self.pitch), 0]
         stabilized.add_child(halo)
         earth.add_child(stabilized)
         self.universe = mnt.CoordinateUniverse('uni', earth)
@@ -258,6 +258,63 @@ class StabilizationTest(TestCase):
         npt.assert_almost_equal(np.linalg.norm(res4 -
                                                np.array([24, 745., 812])),
                                 0)
+
+
+class StabilizationTestMultipleLocations(TestCase):
+    def setUp(self):
+        earth = mnt.coordinate_lib['WGS-84']()
+        earth.loc_count = 2
+        earth.name = 'earth'
+        stabilized = mnt.CartesianCoordinateFrame()
+        stabilized.name = 'stabilized'
+        stabilized.loc_count = 2
+        self.lat = [10., 10.]
+        self.lon = [15., 15.]
+        self.height = [7000., 7000.]
+        self.roll = [np.pi/6., np.pi/6.]
+        self.pitch = [0, 0]  # np.pi/9.
+        self.yaw = [-np.pi, -np.pi]
+        self.loc_count = 2
+        stabilized.pos = [self.lat, self.lon, self.height]
+        stabilized.euler = [[0, 0], [0, 0], np.rad2deg(self.yaw)]
+        halo = mnt.CartesianCoordinateFrame()
+        halo.name = 'HALO'
+        halo.euler = [np.rad2deg(self.roll), np.rad2deg(self.pitch), [0, 0]]
+        halo.loc_count = 2
+        stabilized.add_child(halo)
+        earth.add_child(stabilized)
+        self.universe = mnt.CoordinateUniverse('uni', earth, loc_count=2)
+
+    def test_roll_correction_multiple_locations(self):
+        transform = self.universe.get_transformation('HALO', 'stabilized')
+        res = transform.apply_direction(0, 1, 0)
+        npt.assert_almost_equal(res, [[0, 0], np.cos(self.roll),
+                                      np.sin(self.roll)])
+
+    def test_plane2plane_multiple_locations(self):
+        plane2 = mnt.CartesianCoordinateFrame()
+        plane2.name = 'plane2'
+        plane2.pos = [[10.1, 10.1], [15.2, 15.2], [7500., 7500.]]
+        plane2.euler = [[0, 0], [0.1, 0.1], [0.2, 0.2]]
+        plane2.loc_count = 2
+        self.universe.get_frame('earth').add_child(plane2)
+        tr1 = self.universe.get_transformation("HALO", 'plane2')
+        tr2 = self.universe.get_transformation("plane2", "HALO")
+        res1 = tr1.apply_point(0, 0, 0)
+        res2 = tr2.apply_point(0, 0, 0)
+        res3 = tr2.apply_point(100, 0, 0)
+        res4 = tr2.apply_point(*tr1.apply_point(24, 745., 812))
+        res2 = np.array(res2)
+        res3 = np.array(res3)
+        res4 = np.array(res4)
+
+        npt.assert_almost_equal(np.linalg.norm(res1), np.linalg.norm(res2))
+        npt.assert_almost_equal(np.linalg.norm((res3 - res2)[..., 0]), 100)
+        npt.assert_almost_equal(np.linalg.norm((res3 - res2)[..., 1]), 100)
+        npt.assert_almost_equal(np.linalg.norm(res4 -
+                                               np.array([[24, 24],
+                                                         [745., 745.],
+                                                         [812, 812]])), 0)
 
 
 class Ball(TestCase):
