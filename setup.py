@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="mounttree",
-    version="0.0.1",
+    version="1.0.1",
     author="Tobias Kölling",
     author_email="tobias.koelling@physik.uni-muenchen.de",
     description="Transformations between related coordinate systems",
