@@ -10,8 +10,7 @@ def load_mounttree(filename):
     name = tree['description']['name']
     tree = tree['mounttree']
     root_frame = create_from_yaml(tree)
-    sensors = find_sensors_in_tree(tree)
-    universe = mnt.CoordinateUniverse(name, root_frame, sensors=sensors)
+    universe = mnt.CoordinateUniverse(name, root_frame)
     return universe
 
 
@@ -35,14 +34,6 @@ def create_from_yaml(mounttree):
             rhs.add_child(create_from_yaml(subframe))
     return rhs
 
-def _find_sensors_in_tree(mounttree):
-    for sensor in mounttree.get("sensors", []):
-        yield sensor["sensorId"], sensor
-    for subtree in mounttree.get("subframes", []):
-        yield from _find_sensors_in_tree(subtree)
-
-def find_sensors_in_tree(mounttree):
-    return dict(_find_sensors_in_tree(mounttree))
 
 def convert_rot_string(rot_string):
     reRotPrimitive = re.compile(
